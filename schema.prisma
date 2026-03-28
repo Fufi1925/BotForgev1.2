@@ -1,0 +1,249 @@
+// BotForge Prisma Schema
+// Supports PostgreSQL (change provider to "mongodb" for MongoDB)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// NextAuth required models
+// ─────────────────────────────────────────────
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// BotForge User Model
+// ─────────────────────────────────────────────
+model User {
+  id              String    @id @default(cuid())
+  discordId       String    @unique
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  discriminator   String?
+  accessToken     String?   @db.Text
+  refreshToken    String?   @db.Text
+  tokenExpires    DateTime?
+  isStaffMember   Boolean   @default(false)
+  joinedMainServer Boolean  @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  managedGuilds   GuildConfig[] @relation("GuildManagers")
+}
+
+// ─────────────────────────────────────────────
+// Guild (Server) Configuration
+// ─────────────────────────────────────────────
+model GuildConfig {
+  id              String   @id @default(cuid())
+  guildId         String   @unique
+  guildName       String
+  guildIcon       String?
+  botPresent      Boolean  @default(false)
+  prefix          String   @default("!")
+  language        String   @default("de")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  managers        User[]          @relation("GuildManagers")
+  automod         AutoModConfig?
+  musicConfig     MusicConfig?
+  logConfig       LogConfig?
+  economyConfig   EconomyConfig?
+  welcomeConfig   WelcomeConfig?
+  statsData       GuildStats[]
+}
+
+// ─────────────────────────────────────────────
+// AutoMod Configuration
+// ─────────────────────────────────────────────
+model AutoModConfig {
+  id                  String      @id @default(cuid())
+  guildId             String      @unique
+  guild               GuildConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  enabled             Boolean     @default(false)
+  filterHateSpeech    Boolean     @default(true)
+  filterLinks         Boolean     @default(true)
+  filterSpam          Boolean     @default(true)
+  filterInvites       Boolean     @default(true)
+  filterCaps          Boolean     @default(true)
+  filterEmojis        Boolean     @default(false)
+  filterUnicode       Boolean     @default(false)
+  aiToxicityEnabled   Boolean     @default(false)
+  aiToxicityThreshold Float       @default(0.7)
+
+  spamMessageCount    Int         @default(5)
+  spamTimeWindowSec   Int         @default(10)
+  capsPercentage      Int         @default(70)
+  maxEmojis           Int         @default(10)
+
+  // Punishment thresholds (warn points)
+  warnThreshold       Int         @default(3)
+  muteThreshold       Int         @default(5)
+  timeoutThreshold    Int         @default(7)
+  kickThreshold       Int         @default(10)
+  banThreshold        Int         @default(15)
+
+  muteDurationMin     Int         @default(10)
+  logChannelId        String?
+  exemptRoles         String[]    @default([])
+  exemptChannels      String[]    @default([])
+  customBadWords      String[]    @default([])
+
+  updatedAt           DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Music Configuration
+// ─────────────────────────────────────────────
+model MusicConfig {
+  id              String      @id @default(cuid())
+  guildId         String      @unique
+  guild           GuildConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  enabled         Boolean     @default(true)
+  djRoleId        String?
+  defaultVolume   Int         @default(50)
+  maxQueueSize    Int         @default(100)
+  allowFilters    Boolean     @default(true)
+  allowPlaylists  Boolean     @default(true)
+  autoLeave       Boolean     @default(true)
+  autoLeaveDelay  Int         @default(60)
+
+  updatedAt       DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Logging Configuration
+// ─────────────────────────────────────────────
+model LogConfig {
+  id                      String      @id @default(cuid())
+  guildId                 String      @unique
+  guild                   GuildConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  enabled                 Boolean     @default(false)
+  messageEditChannel      String?
+  messageDeleteChannel    String?
+  memberJoinChannel       String?
+  memberLeaveChannel      String?
+  roleChangeChannel       String?
+  channelChangeChannel    String?
+  voiceChannel            String?
+  modActionChannel        String?
+  boostChannel            String?
+
+  logMessageEdits         Boolean     @default(true)
+  logMessageDeletes       Boolean     @default(true)
+  logMemberJoins          Boolean     @default(true)
+  logMemberLeaves         Boolean     @default(true)
+  logRoleChanges          Boolean     @default(true)
+  logVoiceActivity        Boolean     @default(true)
+  logModActions           Boolean     @default(true)
+
+  updatedAt               DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Economy Configuration
+// ─────────────────────────────────────────────
+model EconomyConfig {
+  id                  String      @id @default(cuid())
+  guildId             String      @unique
+  guild               GuildConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  enabled             Boolean     @default(true)
+  currencyName        String      @default("Coins")
+  currencySymbol      String      @default("🪙")
+  dailyAmount         Int         @default(100)
+  workMinAmount       Int         @default(50)
+  workMaxAmount       Int         @default(200)
+  messageXpMin        Int         @default(5)
+  messageXpMax        Int         @default(15)
+  voiceXpPerMin       Int         @default(3)
+  xpCooldownSec       Int         @default(60)
+
+  updatedAt           DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Welcome / Goodbye Configuration
+// ─────────────────────────────────────────────
+model WelcomeConfig {
+  id                  String      @id @default(cuid())
+  guildId             String      @unique
+  guild               GuildConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  welcomeEnabled      Boolean     @default(false)
+  welcomeChannelId    String?
+  welcomeMessage      String?     @db.Text
+  welcomeColor        String      @default("#5865F2")
+
+  goodbyeEnabled      Boolean     @default(false)
+  goodbyeChannelId    String?
+  goodbyeMessage      String?     @db.Text
+  goodbyeColor        String      @default("#ED4245")
+
+  autoRoleId          String?
+
+  updatedAt           DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Guild Stats (Time-Series Data)
+// ─────────────────────────────────────────────
+model GuildStats {
+  id              String      @id @default(cuid())
+  guildId         String
+  guild           GuildConfig @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  date            DateTime    @default(now())
+  memberCount     Int         @default(0)
+  messageCount    Int         @default(0)
+  activeUsers     Int         @default(0)
+  voiceMinutes    Int         @default(0)
+
+  @@index([guildId, date])
+}
