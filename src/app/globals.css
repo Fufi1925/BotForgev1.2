@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --discord-blurple: #5865F2;
+  --discord-green: #57F287;
+  --discord-red: #ED4245;
+  --discord-yellow: #FEE75C;
+  --discord-fuchsia: #EB459E;
+  --botforge-primary: #7C3AED;
+  --botforge-accent: #A78BFA;
+}
+
+@layer base {
+  * { @apply border-gray-800; }
+  body { @apply bg-gray-950 text-gray-100; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-gray-900; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-600; }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-xl;
+  }
+  .btn-primary {
+    @apply bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-discord {
+    @apply bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 flex items-center gap-3;
+  }
+  .btn-secondary {
+    @apply bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2;
+  }
+  .toggle-switch {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors duration-200 focus:outline-none;
+  }
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-all duration-150 text-sm font-medium;
+  }
+  .sidebar-item-active {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-violet-400 bg-violet-500/10 text-sm font-medium;
+  }
+}
+
+/* Discord Embed Styles */
+.discord-embed {
+  @apply bg-[#2b2d31] border-l-4 rounded-r-lg p-4 max-w-lg font-sans;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.discord-embed-title { @apply text-white font-semibold text-base mb-1; }
+.discord-embed-description { @apply text-gray-300 text-sm leading-relaxed; }
+.discord-embed-field-name { @apply text-white font-semibold text-xs mb-1; }
+.discord-embed-field-value { @apply text-gray-300 text-xs; }
+.discord-embed-footer { @apply flex items-center gap-2 mt-3 text-gray-400 text-xs; }
+.discord-embed-footer img { @apply w-4 h-4 rounded-full; }
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-violet-400 to-purple-300 bg-clip-text text-transparent;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(124, 58, 237, 0); }
+}
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
